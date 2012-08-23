@@ -1,6 +1,6 @@
 /*
 Backbone.ValidityModel.js
-(c) 2012 Jamse Cracknell
+(c) 2012 James Cracknell
 Backbone.ValidityModel may be freely distributed under the WTFPL.
 For more information visit:
 http://github.com/jcracknell/backbone.validitymodel
