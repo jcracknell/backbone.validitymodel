@@ -85,7 +85,7 @@ Backbone.ValidityModel.configure({
 	separator: '/',
 
 	// Specify the model property defining attribute tests.
-	testsProperty: 'validation',
+	validationProperty: 'validation',
 
 	// Enable/disable triggering validation events on the validity model.
 	// `events` must be true.

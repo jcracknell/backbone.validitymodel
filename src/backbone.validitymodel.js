@@ -7,19 +7,23 @@ http://github.com/jcracknell/backbone.validitymodel
 */ 
 (function(_, Backbone) {
 
-if(!_) throw 'Backbone.ValidityModel requires underscore.js';
-if(!Backbone) throw 'Backbone.ValidityModel requires backbone.js';
+var __name__ = 'Backbone.ValidityModel';
+
+if(!_) throw __name__ + ' requires underscore.js';
+if(!Backbone) throw __name__ + ' requires backbone.js';
 
 var __module__ = Backbone.ValidityModel || (Backbone.ValidityModel = { });
 
-var configuration = {
+var defaultConfiguration = {
 	events: true,
 	lazy: true,
 	modelEvents: true,
 	separator: '/',
-	testsProperty: 'validation',
+	validationProperty: 'validation',
 	validityModelEvents: true
 };
+
+var configuration;
 
 var Binding = (function() {
 	function Binding(model, validityModel) {
@@ -60,27 +64,32 @@ var Binding = (function() {
 				this._validityModel.trigger(e);
 		},
 		_validate: function() {
-			var modelValidity = true;
+			var model = this._model;
+			var validity = true;
 
-			_.each(this._model[configuration.testsProperty], function(tests, attributeName) {
+			_.each(model[configuration.validationProperty], function(attributeTests, attributeName) {
 				var attributeValidity = true;
 
-				_.each(tests, function(test, testName) {
+				_.each(attributeTests, function(attributeTest, attributeTestName) {
 					// If lazy mode is enabled then only run the test if the attribute
 					// is still valid (if no previous test has failed)
-					var testValidity = (configuration.lazy && !attributeValidity)
-						|| !!test.call(this._model, this._model.get(attributeName));
+					var attributeTestValidity = !!(
+						(configuration.lazy && !attributeValidity)
+						|| attributeTest.call(model, model.get(attributeName))
+					);
 
 					// Update the validity dependency chain
-					modelValidity &= attributeValidity &= testValidity;	
+					// Cannot use &= here because it coerces to number
+					attributeValidity = attributeValidity && attributeTestValidity;
+					validity = validity && attributeTestValidity;
 
-					this._updateValidity([attributeName, testName], testValidity);
+					this._updateValidity([attributeName, attributeTestName], attributeTestValidity);
 				}, this);
 
 				this._updateValidity([attributeName], attributeValidity);
 			}, this);
 
-			this._updateValidity([], modelValidity);
+			this._updateValidity([], validity);
 		}
 	});
 
@@ -93,7 +102,14 @@ _.extend(__module__, {
 		binding.bind();
 		return binding;
 	},
-	configure: function(o) { _.extend(configuration, o); }
+	configure: function(o) {
+		_.extend(configuration, o);
+	},
+	resetConfiguration: function(o) {
+		configuration = _.extend({}, defaultConfiguration);
+	}
 });
+
+__module__.resetConfiguration();
 
 })(_, Backbone);
