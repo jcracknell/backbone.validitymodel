@@ -106,7 +106,7 @@ var Binding = (function() {
 		},
 		unbind: function() {
 			this._model.off('change', _validate, this);
-		},
+		}
 	});
 
 	return Binding;
