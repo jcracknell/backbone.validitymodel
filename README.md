@@ -98,8 +98,10 @@ Backbone.ValidityModel.configure({
 	// The default implementation (shown below) delegates to the `validityOverride`
 	// property of the model, if it exists.
 	validityOverride: function(context) { 
-		return (context.model.validityOverride || function() { return context.validity; })
-			.call(context.model, context);
+		var modelOverride = context.model.validityOverride;
+		return _.isFunction(modelOverride)
+			? !!modelOverride.call(model, context)
+			: context.validity;
 	}
 });
 ```
