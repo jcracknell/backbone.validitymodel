@@ -36,75 +36,77 @@ var Binding = (function() {
 		this._validityModel = validityModel || model;
 	}
 
-	_.extend(Binding.prototype, {
-		bind: function() {
-			this._validate();
-			this._model.on('change', this._validate, this);
-		},
-		unbind: function() {
-			this._model.off('change', this._validate, this);
-		},
-		_updateValidity: function(path, validity) {
-			var validKey = ['$valid'].concat(path).join(configuration.separator);
-			var invalidKey = ['$invalid'].concat(path).join(configuration.separator);
+	function _updateValidity(path, validity) {
+		var validKey = ['$valid'].concat(path).join(configuration.separator);
+		var invalidKey = ['$invalid'].concat(path).join(configuration.separator);
 
-			// Check if this update represents a change in state
-			if(this._validityModel.get(validKey) === validity) return;
+		// Check if this update represents a change in state
+		if(this._validityModel.get(validKey) === validity) return;
 
-			this._validityModel.set(validKey, validity);
-			this._validityModel.set(invalidKey, !validity);
+		this._validityModel.set(validKey, validity);
+		this._validityModel.set(invalidKey, !validity);
 
-			if(!(configuration.events && (configuration.modelEvents || configuration.validityModelEvents))) return;
+		if(!(configuration.events && (configuration.modelEvents || configuration.validityModelEvents))) return;
 
-			var e = (validity ? 'valid' : 'invalid') + (path.length ? ':' + path.join(configuration.separator) : '');
+		var e = (validity ? 'valid' : 'invalid') + (path.length ? ':' + path.join(configuration.separator) : '');
 
-			// Trigger the event on the model if model events are enabled
-			if(configuration.modelEvents)
-				this._model.trigger(e);
-			// Trigger the event on the validity model if validity model events are enabled
-			// and the event has not already been triggered (model events enabled and the model
-			// is the validity model)
-			if(configuration.validityModelEvents && !(configuration.modelEvents && this._validityModel === this._model))
-				this._validityModel.trigger(e);
-		},
-		_validate: function() {
-			var model = this._model;
-			var validity = true;
+		// Trigger the event on the model if model events are enabled
+		if(configuration.modelEvents)
+			this._model.trigger(e);
+		// Trigger the event on the validity model if validity model events are enabled
+		// and the event has not already been triggered (model events enabled and the model
+		// is the validity model)
+		if(configuration.validityModelEvents && !(configuration.modelEvents && this._validityModel === this._model))
+			this._validityModel.trigger(e);
+	}
 
-			_.each(model[configuration.validationProperty], function(attributeTests, attributeName) {
-				var attributeValue = model.get(attributeName);
-				var attributeValidity = true;
+	function _validate() {
+		var model = this._model;
+		var validity = true;
 
-				_.each(attributeTests, function(attributeTest, attributeTestName) {
-					// If lazy mode is enabled then only run the test if the attribute
-					// is still valid (if no previous test has failed)
-					var attributeTestValidity = !!(
-						(configuration.lazy && !attributeValidity)
-						|| attributeTest.call(model, attributeValue)
-					);
+		_.each(model[configuration.validationProperty], function(attributeTests, attributeName) {
+			var attributeValue = model.get(attributeName);
+			var attributeValidity = true;
 
-					attributeTestValidity = !!configuration.validityOverride({
-						attributeName: attributeName,
-						attributeValue: attributeValue,
-						model: this._model,
-						testName: attributeTestName,
-						validity: attributeTestValidity,
-						validityModel: this._validityModel
-					});	
+			_.each(attributeTests, function(attributeTest, attributeTestName) {
+				// If lazy mode is enabled then only run the test if the attribute
+				// is still valid (if no previous test has failed)
+				var attributeTestValidity = !!(
+					(configuration.lazy && !attributeValidity)
+					|| attributeTest.call(model, attributeValue)
+				);
 
-					// Update the validity dependency chain
-					// Cannot use &= here because it coerces to number
-					attributeValidity = attributeValidity && attributeTestValidity;
-					validity = validity && attributeTestValidity;
+				attributeTestValidity = !!configuration.validityOverride({
+					attributeName: attributeName,
+					attributeValue: attributeValue,
+					model: this._model,
+					testName: attributeTestName,
+					validity: attributeTestValidity,
+					validityModel: this._validityModel
+				});	
 
-					this._updateValidity([attributeName, attributeTestName], attributeTestValidity);
-				}, this);
+				// Update the validity dependency chain
+				// Cannot use &= here because it coerces to number
+				attributeValidity = attributeValidity && attributeTestValidity;
+				validity = validity && attributeTestValidity;
 
-				this._updateValidity([attributeName], attributeValidity);
+				_updateValidity.call(this, [attributeName, attributeTestName], attributeTestValidity);
 			}, this);
 
-			this._updateValidity([], validity);
-		}
+			_updateValidity.call(this, [attributeName], attributeValidity);
+		}, this);
+
+		_updateValidity.call(this, [], validity);
+	}
+
+	_.extend(Binding.prototype, {
+		bind: function() {
+			_validate.call(this);
+			this._model.on('change', _validate, this);
+		},
+		unbind: function() {
+			this._model.off('change', _validate, this);
+		},
 	});
 
 	return Binding;
