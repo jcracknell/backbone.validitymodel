@@ -24,7 +24,7 @@ var defaultConfiguration = {
 	validityOverride: function(context) { 
 		var modelOverride = context.model.validityOverride;
 		return _.isFunction(modelOverride)
-			? !!modelOverride.call(model, context)
+			? !!modelOverride.call(context.model, context)
 			: context.validity;
 	}
 };
