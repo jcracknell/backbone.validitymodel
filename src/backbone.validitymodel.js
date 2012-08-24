@@ -20,7 +20,11 @@ var defaultConfiguration = {
 	modelEvents: true,
 	separator: '/',
 	validationProperty: 'validation',
-	validityModelEvents: true
+	validityModelEvents: true,
+	validityOverride: function(context) { 
+		return (context.model.validityOverride || function() { return context.validity; })
+			.call(context.model, context);
+	}
 };
 
 var configuration;
@@ -68,6 +72,7 @@ var Binding = (function() {
 			var validity = true;
 
 			_.each(model[configuration.validationProperty], function(attributeTests, attributeName) {
+				var attributeValue = model.get(attributeName);
 				var attributeValidity = true;
 
 				_.each(attributeTests, function(attributeTest, attributeTestName) {
@@ -75,8 +80,17 @@ var Binding = (function() {
 					// is still valid (if no previous test has failed)
 					var attributeTestValidity = !!(
 						(configuration.lazy && !attributeValidity)
-						|| attributeTest.call(model, model.get(attributeName))
+						|| attributeTest.call(model, attributeValue)
 					);
+
+					attributeTestValidity = !!configuration.validityOverride({
+						attributeName: attributeName,
+						attributeValue: attributeValue,
+						model: this._model,
+						testName: attributeTestName,
+						validity: attributeTestValidity,
+						validityModel: this._validityModel
+					});	
 
 					// Update the validity dependency chain
 					// Cannot use &= here because it coerces to number

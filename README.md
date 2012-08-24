@@ -89,6 +89,17 @@ Backbone.ValidityModel.configure({
 
 	// Enable/disable triggering validation events on the validity model.
 	// `events` must be true.
-	validityModelEvents: true
+	validityModelEvents: true,
+
+	// Override validity evaluation at a global level.
+	// This is useful if you want to make your models valid or invalid under certain conditions.
+	// The provided `context` object has the following properties:
+	//   `attributeName`, `attributeValue`, `model`, `testName`, `validity`, `validityModel`
+	// The default implementation (shown below) delegates to the `validityOverride`
+	// property of the model, if it exists.
+	validityOverride: function(context) { 
+		return (context.model.validityOverride || function() { return context.validity; })
+			.call(context.model, context);
+	}
 });
 ```

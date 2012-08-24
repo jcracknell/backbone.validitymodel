@@ -1,6 +1,6 @@
 (function() {
 
-describe('configuration', function() {
+describe('Configured', function() {
 	var TestModel = Backbone.Model.extend({
 		defaults: {
 			name: '',
@@ -100,6 +100,46 @@ describe('configuration', function() {
 
 	describe('validityModelEvents', function() {
 	}); // validityModelEvents
+
+	describe('validityOverride', function() {
+		
+		describe('returns false', function() {
+			beforeEach(function() {
+				Backbone.ValidityModel.configure({
+					validityOverride: function() {
+						return false;
+					}
+				});	
+			});
+
+			it('should never be valid', function() {
+				var model = new TestModel();
+
+				model.set('name', 'James Cracknell');
+				model.set('age', 26);
+
+				expect(model.get('$valid')).toEqual(false);
+				expect(model.get('$invalid')).toEqual(true);
+			});
+		});
+
+		describe('returns true', function() {
+			beforeEach(function() {
+				Backbone.ValidityModel.configure({
+					validityOverride: function() {
+						return true;
+					}
+				});	
+			});
+
+			it('should always be valid', function() {
+				var model = new TestModel();
+
+				expect(model.get('$valid')).toEqual(true);
+				expect(model.get('$invalid')).toEqual(false);
+			});
+		});
+	});
 });
 
 })();
